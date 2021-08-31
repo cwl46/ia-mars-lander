@@ -73,7 +73,7 @@ for t in t_array[1:]:
     v_verlet = (x_verlet - x_list_verlet[-1]) / dt
 
 
-# convert trajectory lists into arrays, so they can be sliced (useful for Assignment 2)
+# convert trajectory lists into arrays
 x_array_analytical = np.array(x_list_analytical)
 v_array_analytical = np.array(v_list_analytical)
 x_array_euler = np.array(x_list_euler)
