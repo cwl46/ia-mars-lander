@@ -1,2 +1,4 @@
-lander/.vs
+lander/.vs/
+lander/Debug/
+lander/packages/
 lander/lander.vcxproj.user
