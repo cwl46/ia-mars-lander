@@ -30,54 +30,69 @@ v0 = 1
 omega, phi, A = analytical_params(m, k, x0, v0)
 
 # simulation time, timestep and time
-t_max = 100
-dt = 0.1
+t_max = 1500
+dt = 1.9999
 t_array = np.arange(0, t_max, dt)
 
 # initialise variables for start
 x_euler = x0
 v_euler = v0
-x_verlot = x0
-v_verlot = v0
-x_verlot_prev = x0
-v_verlot_prev = v0
 
 # initialise empty lists to record trajectories
 x_list_analytical = []
 v_list_analytical = []
 x_list_euler = []
 v_list_euler = []
-x_list_verlot = []
-v_list_verlot = []
 
 for t in t_array:
-    # calculate new position and velocity - Analytical Soluiton
-
     # append current state to trajectories
     x_list_analytical.append(x_analytical(omega, phi, A, t))
     v_list_analytical.append(v_analytical(omega, phi, A, t))
     x_list_euler.append(x_euler)
     v_list_euler.append(v_euler)
-    x_list_verlot.append(x_verlot)
-    v_list_verlot.append(v_verlot)
 
     # calculate new position and velocity - Euler Integration
-    a = - k * x_euler / m
+    a_euler = - k * x_euler / m
     x_euler = x_euler + dt * v_euler
-    v_euler = v_euler + dt * a
+    v_euler = v_euler + dt * a_euler
+
+# initialise initial states to record trajectories for Verlet Integration
+x_list_verlet = [x_list_euler[0]]
+v_list_verlet = [v_list_euler[0]]
+x_verlet = x_list_euler[1]
+v_verlet = v_list_euler[1]
+
+for t in t_array[1:]:
+    # append current state to trajectories
+    x_list_verlet.append(x_verlet)
+    v_list_verlet.append(v_verlet)
+
+    # calculate new position and velocity - Verlet Integration
+    a_verlet = - k * x_verlet / m
+    x_verlet = 2 * x_verlet - x_list_verlet[-2] + math.pow(dt, 2) * a_verlet
+    v_verlet = (x_verlet - x_list_verlet[-1]) / dt
+
 
 # convert trajectory lists into arrays, so they can be sliced (useful for Assignment 2)
 x_array_analytical = np.array(x_list_analytical)
 v_array_analytical = np.array(v_list_analytical)
 x_array_euler = np.array(x_list_euler)
 v_array_euler = np.array(v_list_euler)
+x_array_verlet = np.array(x_list_verlet)
+v_array_verlet = np.array(v_list_verlet)
 
 # plot the position-time graph
-plt.figure(1)
-plt.clf()
-plt.xlabel('time (s)')
-plt.grid()
-plt.plot(t_array, x_array_euler, label='x (m)')
-plt.plot(t_array, v_array_euler, label='v (m/s)')
-plt.legend()
+fig, subplots = plt.subplots(3, sharex=True)
+subplots[0].plot(t_array, x_array_analytical, label='x (m)')
+subplots[0].plot(t_array, v_array_analytical, label='v (m/s)')
+subplots[0].title.set_text('Analytical Solution dt={}'.format(dt))
+subplots[1].plot(t_array, x_array_euler, label='x (m)')
+subplots[1].plot(t_array, v_array_euler, label='v (m/s)')
+subplots[1].title.set_text('Euler Integration dt={}'.format(dt))
+subplots[2].plot(t_array, x_array_verlet, label='x (m)')
+subplots[2].plot(t_array, v_array_verlet, label='v (m/s)')
+subplots[2].title.set_text('Verlet Integration dt={}'.format(dt))
+for subplot in subplots:
+    subplot.grid()
+    subplot.legend()
 plt.show()
