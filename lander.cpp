@@ -18,7 +18,43 @@
 void autopilot(void)
 // Autopilot to adjust the engine throttle, parachute and attitude control
 {
-  // INSERT YOUR CODE HERE
+  double K_h = 0.018;
+  double K_p = 0.9;
+  double delta = 0.6;
+
+  stabilized_attitude = true;
+  attitude_stabilization();
+
+  double descent_rate = velocity * position.norm();
+  double altitude = position.abs() - MARS_RADIUS;
+  double error_term = -(0.5 + K_h * altitude + descent_rate);
+  throttle = delta + K_p * error_term;
+}
+
+vector3d drag_without_parachute(vector3d position)
+{
+  double lander_area = M_PI * LANDER_SIZE * LANDER_SIZE;
+  return -0.5 * atmospheric_density(position) * DRAG_COEF_LANDER * lander_area * velocity.abs2() * velocity.norm();
+}
+
+vector3d drag_with_parachute(vector3d position)
+{
+  double parachute_area = 5.0 * 2.0 * LANDER_SIZE * 2.0 * LANDER_SIZE;
+  return -0.5 * atmospheric_density(position) * DRAG_COEF_CHUTE * parachute_area * velocity.abs2() * velocity.norm();
+}
+
+vector3d euler_update(vector3d net_acceleration)
+{
+  vector3d new_position = position + delta_t * velocity;
+  velocity = velocity + delta_t * net_acceleration;
+  return new_position;
+}
+
+vector3d verlet_update(vector3d net_acceleration, vector3d previous_position)
+{
+  vector3d new_position = 2 * position - previous_position + delta_t * delta_t * net_acceleration;
+  velocity = (new_position - position) / delta_t;
+  return new_position;
 }
 
 void numerical_dynamics(void)
@@ -47,32 +83,6 @@ void numerical_dynamics(void)
   // Here we can apply 3-axis stabilization to ensure the base is always pointing downwards
   if (stabilized_attitude)
     attitude_stabilization();
-}
-
-vector3d drag_without_parachute(vector3d position)
-{
-  double lander_area = M_PI * LANDER_SIZE * LANDER_SIZE;
-  return -0.5 * atmospheric_density(position) * DRAG_COEF_LANDER * lander_area * velocity.abs2() * velocity.norm();
-}
-
-vector3d drag_with_parachute(vector3d position)
-{
-  double parachute_area = 5.0 * 2.0 * LANDER_SIZE * 2.0 * LANDER_SIZE;
-  return -0.5 * atmospheric_density(position) * DRAG_COEF_CHUTE * parachute_area * velocity.abs2() * velocity.norm();
-}
-
-vector3d euler_update(vector3d net_acceleration)
-{
-  vector3d new_position = position + delta_t * velocity;
-  velocity = velocity + delta_t * net_acceleration;
-  return new_position;
-}
-
-vector3d verlet_update(vector3d net_acceleration, vector3d previous_position)
-{
-  vector3d new_position = 2 * position - previous_position + delta_t * delta_t * net_acceleration;
-  velocity = (new_position - position) / delta_t;
-  return new_position;
 }
 
 void initialize_simulation(void)
