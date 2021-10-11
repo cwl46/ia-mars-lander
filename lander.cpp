@@ -22,13 +22,24 @@ void autopilot(void)
   double K_p = 0.9;
   double delta = 0.6;
 
-  stabilized_attitude = true;
-  attitude_stabilization();
-
   double descent_rate = velocity * position.norm();
   double altitude = position.abs() - MARS_RADIUS;
-  double error_term = -(0.5 + K_h * altitude + descent_rate);
-  throttle = delta + K_p * error_term;
+  double ground_speed = sqrt(velocity.abs2() - pow(descent_rate, 2));
+
+  if (ground_speed > 1.0)
+  {
+    throttle = 0.0; // temp
+  }
+  else
+  {
+    stabilized_attitude = true;
+    attitude_stabilization();
+
+    double descent_rate = velocity * position.norm();
+    double altitude = position.abs() - MARS_RADIUS;
+    double error_term = -(0.5 + K_h * altitude + descent_rate);
+    throttle = delta + K_p * error_term;
+  }
 }
 
 vector3d drag_without_parachute(vector3d position)
