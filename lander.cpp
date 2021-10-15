@@ -23,17 +23,20 @@ void autopilot(void)
   double delta = 0.6;
 
   double descent_rate = velocity * position.norm();
+  vector3d radial_velocity = descent_rate * position.norm();
+  vector3d tangential_velocity = velocity - radial_velocity;
   double altitude = position.abs() - MARS_RADIUS;
   double ground_speed = sqrt(velocity.abs2() - pow(descent_rate, 2));
 
   if (ground_speed > 1.0)
   {
-    throttle = 0.0; // temp
+    attitude_stabilization(-tangential_velocity.norm());
+    throttle = K_p * (ground_speed - 1.0);
   }
   else
   {
     stabilized_attitude = true;
-    attitude_stabilization();
+    attitude_stabilization(position.norm());
 
     double descent_rate = velocity * position.norm();
     double altitude = position.abs() - MARS_RADIUS;
@@ -93,7 +96,7 @@ void numerical_dynamics(void)
 
   // Here we can apply 3-axis stabilization to ensure the base is always pointing downwards
   if (stabilized_attitude)
-    attitude_stabilization();
+    attitude_stabilization(position.norm());
 }
 
 void initialize_simulation(void)
